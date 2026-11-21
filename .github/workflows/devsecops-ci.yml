@@ -34,7 +34,7 @@ jobs:
         run: python -m pytest -q
 
   docker-build:
-    name: Docker Build
+    name: Docker Build, Scan, and Push
     runs-on: ubuntu-latest
 
     steps:
@@ -62,3 +62,12 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
+
+      - name: Push Docker image to GitHub Container Registry
+        run: |
+          docker tag devsecops-api:${{ github.sha }} ghcr.io/${{ github.repository }}/devsecops-api:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository }}/devsecops-api:${{ github.sha }}
+
+
+      
+      
