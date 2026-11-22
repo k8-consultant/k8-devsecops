@@ -17,3 +17,12 @@ def home():
 @app.get("/health")
 def health():
     return {"status": "healthy"}
+
+
+@app.get("/version")
+def get_version():
+    return {
+        "application": "devsecops-api",
+        "version": "v2",
+        "deployment": "canary"
+    }
