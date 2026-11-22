@@ -1,4 +1,3 @@
-
 name: DevSecOps CI
 
 on:
@@ -34,7 +33,7 @@ jobs:
         run: python -m pytest -q
 
   docker-build:
-    name: Docker Build, Scan and Push
+    name: Multi-platform Docker Build, Scan and Push
     runs-on: ubuntu-latest
     needs: test
 
@@ -46,15 +45,40 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: |
-          docker build --pull \
-            -t devsecops-api:${{ github.sha }} .
+      - name: Set up QEMU for ARM64 emulation
+        uses: docker/setup-qemu-action@v3
 
-      - name: Run Trivy vulnerability scanner
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build AMD64 image for security scanning
+        run: |
+          docker buildx build --pull \
+            --platform linux/amd64 \
+            --load \
+            -t devsecops-api:amd64-scan .
+
+      - name: Scan AMD64 image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: 'devsecops-api:${{ github.sha }}'
+          image-ref: 'devsecops-api:amd64-scan'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Build ARM64 image for security scanning
+        run: |
+          docker buildx build --pull \
+            --platform linux/arm64 \
+            --load \
+            -t devsecops-api:arm64-scan .
+
+      - name: Scan ARM64 image with Trivy
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: 'devsecops-api:arm64-scan'
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
@@ -69,11 +93,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push Docker image to GHCR
+      - name: Build and publish multi-platform image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          IMAGE=ghcr.io/${{ github.repository_owner }}/devsecops-api
-
-          docker tag devsecops-api:${{ github.sha }} $IMAGE:${{ github.sha }}
-
-          docker push $IMAGE:${{ github.sha }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          pull: false
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/devsecops-api:${{ github.sha }}
