@@ -3,6 +3,8 @@
 
 FROM python:3.12-slim-bookworm
 
+LABEL org.opencontainers.image.source="https://github.com/k8-consultant/k8-devsecops"
+
 WORKDIR /app
 
 RUN groupadd --gid 10001 appgroup \
