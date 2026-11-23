@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI
 import socket
 
@@ -23,13 +22,15 @@ def health():
 def get_version():
     return {
         "application": "devsecops-api",
-        "version": "v3",
-        "deployment": "canary"
+        "version": "v4",
+        "deployment": "blue-green"
     }
+
 
 @app.get("/predict")
 def predict():
-    # Intentionally faulty endpoint for automated canary-abort lab.
-    # The /health endpoint stays healthy to exercise application-level validation.
-    from fastapi import HTTPException
-    raise HTTPException(status_code=500, detail="Simulated prediction service failure")
+    return {
+        "prediction": "approved",
+        "status": "success",
+        "model_version": "v4"
+    }
