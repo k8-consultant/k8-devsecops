@@ -102,3 +102,53 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/devsecops-api:${{ github.sha }}
+
+  update-gitops:
+    name: Update GitOps Image Tag
+    runs-on: ubuntu-latest
+    needs: docker-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout GitOps repository
+        uses: actions/checkout@v4
+        with:
+          repository: k8-consultant/k8-devsecops-gitops
+          token: ${{ secrets.GITOPS_TOKEN }}
+          path: gitops
+
+      - name: Update image tag
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          path = Path("gitops/environments/dev/values.yaml")
+          lines = path.read_text().splitlines(keepends=True)
+
+          for index, line in enumerate(lines):
+              if line.startswith("  tag:"):
+                  lines[index] = f'  tag: "{os.environ["IMAGE_TAG"]}"\n'
+                  break
+          else:
+              raise SystemExit("Image tag not found")
+
+          path.write_text("".join(lines))
+          PY
+
+      - name: Commit and push GitOps update
+        working-directory: gitops
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add environments/dev/values.yaml
+
+          if git diff --cached --quiet; then
+            echo "Image tag already up to date"
+            exit 0
+          fi
+
+          git commit -m "ci: update devsecops-api image to ${{ github.sha }}"
+          git push origin HEAD:main
