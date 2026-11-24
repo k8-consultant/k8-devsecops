@@ -1,7 +1,10 @@
 from fastapi import FastAPI
+from prometheus_fastapi_instrumentator import Instrumentator
 import socket
 
 app = FastAPI(title="DevSecOps Mini Project")
+
+Instrumentator().instrument(app).expose(app)
 
 
 @app.get("/")
