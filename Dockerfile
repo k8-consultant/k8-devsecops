@@ -1,11 +1,12 @@
-
-
-
 FROM python:3.12-slim-bookworm
 
 LABEL org.opencontainers.image.source="https://github.com/k8-consultant/k8-devsecops"
 
 WORKDIR /app
+
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --gid 10001 appgroup \
     && useradd --uid 10001 \
