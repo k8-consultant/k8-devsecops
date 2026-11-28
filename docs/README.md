@@ -17,6 +17,6 @@ Practical local Kubernetes lab. Commands are revision examples, not a complete t
 - [ServiceMonitor discovery](13-servicemonitor/README.md)
 - [GitOps synchronization troubleshooting](14-gitops-troubleshooting/README.md)
 - [SRE golden signals](15-sre-golden-signals/README.md)
-- [Grafana dashboard — next lesson](16-grafana-next/README.md) — next
+- [Grafana SRE dashboard](16-grafana-next/README.md) — completed panels; import test pending
 
 [Application repository](https://github.com/k8-consultant/k8-devsecops) | [GitOps repository](https://github.com/k8-consultant/k8-devsecops-gitops)
